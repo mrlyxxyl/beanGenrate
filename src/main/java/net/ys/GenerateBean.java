@@ -1,34 +1,20 @@
 package net.ys;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GenerateBean {
-    static Connection connection = null;
     static Statement statement = null;
     static ResultSet rs = null;
     static String oneEnter = "\r\n";
     static String twoEnter = "\r\n\r\n";
     static String oneTabStr = "\t";
     static String twoTabStr = "\t\t";
-
-
-    static {
-        try {
-            File file = new File(BeanMain.BEAN_PATH);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection(BeanMain.URL, BeanMain.USER_NAME, BeanMain.PASSWORD);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void generateBean(String dbName) throws SQLException, IOException {
         List<String> tables = getTables(dbName);
@@ -46,7 +32,7 @@ public class GenerateBean {
             for (String table : tables) {
                 fileName = camelFormat(table, true);
 
-                fileWriter = new FileWriter(BeanMain.BEAN_PATH + fileName + ".java");
+                fileWriter = new FileWriter(BeanMain.beanPath + fileName + ".java");
 
                 rs = statement.executeQuery("SELECT COUNT(COLUMN_TYPE) AS c FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA = '" + dbName + "' AND TABLE_NAME = '" + table + "' AND DATA_TYPE = 'decimal'");
                 if (rs.first()) {
@@ -65,7 +51,7 @@ public class GenerateBean {
                 fileWriter.write("*/" + oneEnter);
                 fileWriter.write("public class " + fileName + " implements Serializable {" + twoEnter);
 
-                statement = connection.createStatement();
+                statement = BeanMain.connection.createStatement();
                 rs = statement.executeQuery(String.format(sql, table));
                 while (rs.next()) {
                     columnName = camelFormat(rs.getString("COLUMN_NAME"), false);
@@ -115,7 +101,7 @@ public class GenerateBean {
 
     public static List<String> getTables(String dbName) throws SQLException {
         String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA. TABLES WHERE TABLE_SCHEMA = '" + dbName + "'";
-        statement = connection.createStatement();
+        statement = BeanMain.connection.createStatement();
         rs = statement.executeQuery(sql);
         List<String> tables = new ArrayList<String>();
         while (rs.next()) {

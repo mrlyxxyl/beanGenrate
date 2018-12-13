@@ -1,9 +1,10 @@
 package net.ys;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,27 +14,12 @@ import java.util.List;
  * Date: 17-5-10
  */
 public class GenerateBeanRespMapper {
-    static Connection connection = null;
     static Statement statement = null;
     static ResultSet rs = null;
     static String oneEnter = "\r\n";
     static String twoEnter = "\r\n\r\n";
     static String oneTabStr = "\t";
     static String twoTabStr = "\t\t";
-
-
-    static {
-        try {
-            File file = new File(BeanMain.RESP_MAPPER_PATH);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection(BeanMain.URL, BeanMain.USER_NAME, BeanMain.PASSWORD);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void generateBean(String dbName) throws SQLException, IOException {
         List<String> tables = getTables(dbName);
@@ -50,12 +36,12 @@ public class GenerateBeanRespMapper {
             for (String table : tables) {
                 fileName = camelFormat(table, true);
 
-                fileWriter = new FileWriter(BeanMain.RESP_MAPPER_PATH + fileName + "Response.java");
+                fileWriter = new FileWriter(BeanMain.respMapperPath + fileName + "Response.java");
 
                 fileWriter.write("import io.swagger.annotations.ApiModelProperty;" + twoEnter);
                 fileWriter.write("public class " + fileName + "Response {" + twoEnter);
 
-                statement = connection.createStatement();
+                statement = BeanMain.connection.createStatement();
                 rs = statement.executeQuery(String.format(sql, table));
                 while (rs.next()) {
                     columnName = rs.getString("COLUMN_NAME").toLowerCase();
@@ -112,7 +98,7 @@ public class GenerateBeanRespMapper {
      */
     public static List<String> getTables(String dbName) throws SQLException {
         String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA. TABLES WHERE TABLE_SCHEMA = '" + dbName + "'";
-        statement = connection.createStatement();
+        statement = BeanMain.connection.createStatement();
         rs = statement.executeQuery(sql);
         List<String> tables = new ArrayList<String>();
         while (rs.next()) {

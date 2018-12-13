@@ -1,7 +1,12 @@
 package net.ys;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * User: NMY
@@ -9,19 +14,57 @@ import java.sql.SQLException;
  */
 public class BeanMain {
 
-    public static final String DB_NAME = "sign";
-    public static final String TABLE_NAME = "sys_admin";
-    public static final String URL = "jdbc:mysql://10.40.40.93:3306/" + DB_NAME;
-    public static final String USER_NAME = "root";
-    public static final String PASSWORD = "root";
-    public static final String BEAN_PATH = "D:/bean/";
-    public static final String MAPPER_PATH = "D:/bean/mapper/";
-    public static final String RESP_MAPPER_PATH = "D:/bean/ResponseMapper/";
+    public static String dbName;
+    public static String tableName;
+    public static String url;
+    public static String userName;
+    public static String password;
+    public static String beanPath;
+    public static String mapperPath;
+    public static String respMapperPath;
+    public static Connection connection = null;
+
+    static {
+        try {
+            InputStream in = BeanMain.class.getClassLoader().getResourceAsStream("config.properties");
+            Properties properties = new Properties();
+            properties.load(in);
+            dbName = properties.getProperty("db.name");
+            tableName = properties.getProperty("table.name");
+            url = properties.getProperty("url");
+            userName = properties.getProperty("user.name");
+            password = properties.getProperty("password");
+            beanPath = properties.getProperty("bean.path");
+            mapperPath = properties.getProperty("mapper.path");
+            respMapperPath = properties.getProperty("resp.mapper.path");
+
+            File file = new File(BeanMain.beanPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+
+            file = new File(BeanMain.mapperPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+
+            file = new File(BeanMain.respMapperPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+
+            Class.forName("com.mysql.jdbc.Driver");
+            connection = DriverManager.getConnection(BeanMain.url, BeanMain.userName, BeanMain.password);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) throws IOException, SQLException {
-        GenerateBean.generateBean(DB_NAME);
-        GenerateMapper.generateBean(DB_NAME);
-        GenerateBeanRespMapper.generateBean(DB_NAME);
-        GenerateSelectAll.generateFields(DB_NAME, TABLE_NAME);
+        GenerateBean.generateBean(dbName);
+        GenerateMapper.generateBean(dbName);
+        GenerateBeanRespMapper.generateBean(dbName);
+        GenerateSelectAll.generateFields(dbName, tableName);
+        connection.close();
     }
 }

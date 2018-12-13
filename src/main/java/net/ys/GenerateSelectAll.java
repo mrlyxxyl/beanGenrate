@@ -1,7 +1,9 @@
 package net.ys;
 
 import java.io.IOException;
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * 根据mysql数据库直接生成select *对应的字段列表
@@ -9,23 +11,14 @@ import java.sql.*;
  * Date: 17-5-10
  */
 public class GenerateSelectAll {
-    static Connection connection = null;
+
     static Statement statement = null;
     static ResultSet rs = null;
-
-    static {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection(BeanMain.URL, BeanMain.USER_NAME, BeanMain.PASSWORD);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void generateFields(String dbName, String tableName) throws SQLException, IOException {
         String sql = "SELECT COLUMN_NAME FROM information_schema.`COLUMNS` WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA='%s'";
         String columnName;
-        statement = connection.createStatement();
+        statement = BeanMain.connection.createStatement();
         rs = statement.executeQuery(String.format(sql, tableName, dbName));
         StringBuffer sb = new StringBuffer("SELECT ");
         while (rs.next()) {
